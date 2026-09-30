@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Consulta de CEP</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f2f4f7;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 10px;
+        }
+
+        .descricao {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .campo {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 13px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .resultado {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .resultado div {
+            margin-bottom: 12px;
+        }
+
+        .resultado strong {
+            color: #333;
+        }
+
+        .erro {
+            color: #dc2626;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>📍 Consulta de CEP</h1>
+
+        <p class="descricao">
+            Digite um CEP para consultar o endereço através de uma API.
+        </p>
+
+        <label for="cep">CEP:</label>
+
+        <div class="campo">
+            <input
+                type="text"
+                id="cep"
+                placeholder="Ex: 70040-010"
+                maxlength="9"
+            >
+
+            <button onclick="consultarCEP()">
+                Consultar
+            </button>
+        </div>
+
+        <p id="erro" class="erro"></p>
+
+        <section id="resultado" class="resultado">
+
+            <div>
+                <strong>CEP:</strong>
+                <span id="resultadoCep"></span>
+            </div>
+
+            <div>
+                <strong>Logradouro:</strong>
+                <span id="logradouro"></span>
+            </div>
+
+            <div>
+                <strong>Bairro:</strong>
+                <span id="bairro"></span>
+            </div>
+
+            <div>
+                <strong>Cidade:</strong>
+                <span id="cidade"></span>
+            </div>
+
+            <div>
+                <strong>Estado:</strong>
+                <span id="estado"></span>
+            </div>
+
+            <div>
+                <strong>DDD:</strong>
+                <span id="ddd"></span>
+            </div>
+
+        </section>
+
+        <footer>
+            Site desenvolvido utilizando API ViaCEP
+        </footer>
+
+    </main>
+
+    <script>
+
+        async function consultarCEP() {
+
+            const cep = document.getElementById("cep").value
+                .replace(/\D/g, "");
+
+            const erro = document.getElementById("erro");
+            const resultado = document.getElementById("resultado");
+
+            erro.textContent = "";
+            resultado.style.display = "none";
+
+            if (cep.length !== 8) {
+                erro.textContent = "Digite um CEP válido.";
+                return;
+            }
+
+            try {
+
+                const resposta = await fetch(
+                    `https://viacep.com.br/ws/${cep}/json/`
+                );
+
+                if (!resposta.ok) {
+                    throw new Error("Erro ao consultar a API.");
+                }
+
+                const dados = await resposta.json();
+
+                if (dados.erro) {
+                    erro.textContent = "CEP não encontrado.";
+                    return;
+                }
+
+                document.getElementById("resultadoCep").textContent =
+                    dados.cep;
+
+                document.getElementById("logradouro").textContent =
+                    dados.logradouro || "Não informado";
+
+                document.getElementById("bairro").textContent =
+                    dados.bairro || "Não informado";
+
+                document.getElementById("cidade").textContent =
+                    dados.localidade;
+
+                document.getElementById("estado").textContent =
+                    dados.uf;
+
+                document.getElementById("ddd").textContent =
+                    dados.ddd || "Não informado";
+
+                resultado.style.display = "block";
+
+            } catch (erroAPI) {
+
+                erro.textContent =
+                    "Não foi possível consultar o CEP. Tente novamente.";
+
+                console.error(erroAPI);
+            }
+        }
+
+        document.getElementById("cep").addEventListener(
+            "input",
+            function () {
+
+                let valor = this.value.replace(/\D/g, "");
+
+                if (valor.length > 5) {
+                    valor =
+                        valor.substring(0, 5) +
+                        "-" +
+                        valor.substring(5, 8);
+                }
+
+                this.value = valor;
+            }
+        );
+
+    </script>
+
+</body>
+</html>
